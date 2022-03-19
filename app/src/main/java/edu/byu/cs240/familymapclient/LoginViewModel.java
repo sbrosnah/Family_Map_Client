@@ -11,9 +11,12 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import request.LoginRequest;
+import request.RegisterRequest;
 import result.AllEventResult;
 import result.AllPersonResult;
 import result.LoginResult;
+import result.RegisterResult;
+import result.Result;
 
 public class LoginViewModel extends ViewModel {
 
@@ -27,7 +30,28 @@ public class LoginViewModel extends ViewModel {
 
     private static ServerProxy serverProxy = new ServerProxy(SERVER_HOST, SERVER_PORT);
 
-    private boolean loginSuccess;
+    private boolean success;
+
+    private Handler threadMessageHandler = new Handler() {
+        @Override
+        public void handleMessage(Message message) {
+            Bundle bundle = message.getData();
+            boolean isSuccess = bundle.getBoolean(SUCCESS_KEY);
+            String success_message = bundle.getString(MESSAGE_KEY);
+            Log.d(TAG, "message: " + success_message);
+
+            if(isSuccess) {
+                String authtoken = DataCache.getInstance().getAuthtoken();
+                Log.d(TAG, "authtoken:" + authtoken);
+                Log.d(TAG, "username: " + DataCache.getInstance().getUsername());
+                Log.d(TAG, "PersonID: " + DataCache.getInstance().getPersonID());
+                getData(authtoken);
+            } else {
+                success = false;
+                Log.d(TAG, "Login failed");
+            }
+        }
+    };
 
     private void getData(String authtoken){
 
@@ -41,16 +65,16 @@ public class LoginViewModel extends ViewModel {
                 String secondMessage = bundle.getString(SECOND_MESSAGE_KEY);
 
                 if(firstIsSuccess && !secondIsSuccess){
-                    loginSuccess = false;
+                    success = false;
                     Log.d(TAG, "Error getting events. Message: " + secondMessage);
                 } else if (!firstIsSuccess && secondIsSuccess) {
-                    loginSuccess = false;
+                    success = false;
                     Log.d(TAG, "Error getting people. Message: " + firstMessage);
                 } else if (!firstIsSuccess && !secondIsSuccess) {
-                    loginSuccess = false;
+                    success = false;
                     Log.d(TAG, "Error getting both. Messages: \n " + firstMessage + "\n" + secondMessage);
                 } else {
-                    loginSuccess = true;
+                    success = true;
                     Log.d(TAG, "Success Loading Data!");
                 }
             }
@@ -62,44 +86,64 @@ public class LoginViewModel extends ViewModel {
     }
 
     public void Login() {
-        Handler loginThreadMessageHandler = new Handler() {
-            @Override
-            public void handleMessage(Message message) {
-                Bundle bundle = message.getData();
-                boolean isSuccess = bundle.getBoolean(SUCCESS_KEY);
-                String success_message = bundle.getString(MESSAGE_KEY);
-                Log.d(TAG, "message: " + success_message);
-
-                if(isSuccess) {
-                    String authtoken = DataCache.getInstance().getAuthtoken();
-                    Log.d(TAG, "authtoken:" + authtoken);
-                    Log.d(TAG, "username: " + DataCache.getInstance().getUsername());
-                    Log.d(TAG, "PersonID: " + DataCache.getInstance().getPersonID());
-                    getData(authtoken);
-                } else {
-                    loginSuccess = false;
-                    Log.d(TAG, "Login failed");
-                }
-            }
-        };
 
         //TODO: I NEED TO PASS IN THE ACTUAL REQUEST HERE AS WELL
         LoginRequest request = new LoginRequest();
         request.setUsername("jb");
         request.setPassword("hello");
 
-        LoginTask task = new LoginTask(loginThreadMessageHandler, request);
+        success = false;
+        DataCache.reset();
+
+        LoginTask task = new LoginTask(threadMessageHandler, request);
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.submit(task);
 
     }
 
-    public boolean isLoginSuccess() {
-        return loginSuccess;
+    public void Register() {
+        RegisterRequest request = new RegisterRequest();
+        request.setUsername("Spencer");
+        request.setPassword("B");
+        request.setEmail("d");
+        request.setFirstname("Spencer");
+        request.setLastname("Brosnahan");
+        request.setGender("m");
+
+        success = false;
+        DataCache.reset();
+
+        RegisterTask task = new RegisterTask(threadMessageHandler, request);
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        executor.submit(task);
     }
 
-    public void setLoginSuccess(boolean loginSuccess) {
-        this.loginSuccess = loginSuccess;
+    public void clearDatabase(){
+        Handler clearThreadHandler = new Handler() {
+            @Override
+            public void handleMessage(Message message) {
+                Bundle bundle = message.getData();
+                boolean isSuccess = bundle.getBoolean(SUCCESS_KEY);
+                String successMessage = bundle.getString(MESSAGE_KEY);
+                if(isSuccess){
+                    Log.d(TAG, "successfully cleared database");
+                } else {
+                    Log.d(TAG, "Failure clearing db: " + successMessage);
+                }
+            }
+        };
+
+        ClearDatabaseTask task = new ClearDatabaseTask(clearThreadHandler);
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        executor.submit(task);
+    }
+
+    public boolean isSuccess() {
+        return success;
+    }
+
+    public void setSuccess(boolean success) {
+        this.success = success;
     }
 
     private static class LoginTask implements Runnable {
@@ -131,6 +175,35 @@ public class LoginViewModel extends ViewModel {
         }
     }
 
+    private static class RegisterTask implements Runnable {
+        private final Handler messageHandler;
+        RegisterRequest request;
+
+        public RegisterTask(Handler messageHandler, RegisterRequest request){
+            this.request = request;
+            this.messageHandler = messageHandler;
+        }
+
+        @Override
+        public void run() {
+            RegisterResult result = serverProxy.Register(request);
+            DataCache.getInstance().setAuthtoken(result.getAuthtoken());
+            DataCache.getInstance().setPersonID(result.getPersonID());
+            DataCache.getInstance().setUsername(result.getUsername());
+            sendMessage(result);
+        }
+
+        private void sendMessage(RegisterResult result) {
+            Message message = Message.obtain();
+            Bundle messageBundle = new Bundle();
+            messageBundle.putString(MESSAGE_KEY, result.getMessage());
+            messageBundle.putBoolean(SUCCESS_KEY, result.isSuccess());
+            message.setData(messageBundle);
+
+            messageHandler.sendMessage(message);
+        }
+    }
+
     private static class GetDataTask implements Runnable {
         private final Handler messageHandler;
         private String authtoken;
@@ -147,7 +220,7 @@ public class LoginViewModel extends ViewModel {
             if(personResult.isSuccess() && eventResult.isSuccess()){
                 DataCache.getInstance().setPersonList(personResult.getData());
                 DataCache.getInstance().setEventList(eventResult.getData());
-                serverProxy.OrganizeData();
+                DataCache.getInstance().OrganizeData();
             }
             sendMessage(personResult, eventResult);
         }
@@ -159,6 +232,31 @@ public class LoginViewModel extends ViewModel {
             messageBundle.putBoolean(SUCCESS_KEY, personResult.isSuccess());
             messageBundle.putString(SECOND_MESSAGE_KEY, eventResult.getMessage());
             messageBundle.putBoolean(SECOND_SUCCESS_KEY, eventResult.isSuccess());
+            message.setData(messageBundle);
+
+            messageHandler.sendMessage(message);
+        }
+
+    }
+
+    private static class ClearDatabaseTask implements Runnable {
+        private final Handler messageHandler;
+
+        public  ClearDatabaseTask(Handler messageHandler) {
+            this.messageHandler = messageHandler;
+        }
+
+        @Override
+        public void run() {
+            Result clearResult = serverProxy.clearDatabase();
+            sendMessage(clearResult);
+        }
+
+        private void sendMessage(Result clearResult) {
+            Message message = Message.obtain();
+            Bundle messageBundle = new Bundle();
+            messageBundle.putString(MESSAGE_KEY, clearResult.getMessage());
+            messageBundle.putBoolean(SUCCESS_KEY, clearResult.isSuccess());
             message.setData(messageBundle);
 
             messageHandler.sendMessage(message);

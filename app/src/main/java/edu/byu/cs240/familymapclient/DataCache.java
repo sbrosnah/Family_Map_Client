@@ -36,6 +36,15 @@ public class DataCache {
     */
     //All the methods needed.
 
+
+    public static void OrganizeData() {
+
+    }
+
+    public static void reset() {
+        instance = null;
+    }
+
     public String getAuthtoken() {
         return authtoken;
     }

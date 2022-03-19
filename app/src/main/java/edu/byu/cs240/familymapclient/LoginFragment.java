@@ -1,27 +1,14 @@
 package edu.byu.cs240.familymapclient;
 
-import android.app.Person;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
 
-import android.os.Handler;
-import android.os.Message;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-
-import java.util.ArrayList;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
-import request.LoginRequest;
-import result.AllEventResult;
-import result.AllPersonResult;
-import result.LoginResult;
 
 public class LoginFragment extends Fragment {
 
@@ -51,7 +38,19 @@ public class LoginFragment extends Fragment {
             @Override
             public void onClick(View view) {
                 getLoginViewModel().Login();
-                if(getLoginViewModel().isLoginSuccess()){
+                if(getLoginViewModel().isSuccess()){
+                    //TODO: SEND A CALLBACK TO MAIN TO SWITCH VIEWS
+                } else {
+                    //TODO: Display a login failed toast
+                }
+            }
+        });
+
+        registerButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                getLoginViewModel().Register();
+                if(getLoginViewModel().isSuccess()){
                     //TODO: SEND A CALLBACK TO MAIN TO SWITCH VIEWS
                 } else {
                     //TODO: Display a login failed toast

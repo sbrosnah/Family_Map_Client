@@ -8,6 +8,8 @@ import result.AllEventResult;
 import result.AllPersonResult;
 import result.LoginResult;
 import result.RegisterResult;
+import result.Result;
+
 import java.io.*;
 import java.net.*;
 
@@ -62,6 +64,41 @@ public class ServerProxy {
 
 
     public RegisterResult Register(RegisterRequest request) {
+        try {
+            URL url = new URL("http://" + serverHost + ":" + serverPort + "/user/register");
+
+            HttpURLConnection http = (HttpURLConnection) url.openConnection();
+
+            http.setRequestMethod("POST");
+
+            http.setDoOutput(true);
+
+            http.addRequestProperty("Accept", "application/json");
+
+            http.connect();
+
+            String json = gson.toJson(request);
+
+            OutputStream reqBody = http.getOutputStream();
+
+            writeString(json, reqBody);
+
+            reqBody.close();
+
+            InputStream respBody;
+
+            if(http.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                respBody = http.getInputStream();
+            } else {
+                respBody = http.getErrorStream();
+            }
+            String respData = readString(respBody);
+            RegisterResult result = gson.fromJson(respData, RegisterResult.class);
+
+            return result;
+        } catch (IOException e){
+            e.printStackTrace();
+        }
         return null;
     }
 
@@ -130,8 +167,35 @@ public class ServerProxy {
         return null;
     }
 
-    public void OrganizeData() {
+    public Result clearDatabase() {
+        try {
+            URL url = new URL("http://" + serverHost + ":" + serverPort + "/clear");
 
+            HttpURLConnection http = (HttpURLConnection) url.openConnection();
+
+            http.setRequestMethod("POST");
+
+            http.setDoOutput(false);
+
+            http.addRequestProperty("Accept", "application/json");
+
+            http.connect();
+
+            InputStream respBody;
+
+            if(http.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                respBody = http.getInputStream();
+            } else {
+                respBody = http.getErrorStream();
+            }
+            String respData = readString(respBody);
+            Result result = gson.fromJson(respData, Result.class);
+
+            return result;
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+        return null;
     }
 
     private static String readString(InputStream is) throws IOException {
