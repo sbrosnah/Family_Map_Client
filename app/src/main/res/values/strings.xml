@@ -1,5 +1,42 @@
 <resources>
-    <string name="app_name">Family Map Client</string>
-    <!-- TODO: Remove or change this placeholder text -->
+    <string name="app_name">Family Map</string>
+    <string name="app_name_settings">Family Map: Settings</string>
+    <string name="app_name_search">Family Map: Search</string>
+    <string name="app_name_person">Family Map: Person Details</string>
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="serverHost">SERVER HOST: </string>
+    <string name="serverPort">SERVER PORT: </string>
+    <string name="username">USERNAME: </string>
+    <string name="password">PASSWORD: </string>
+    <string name="firstname">FIRSTNAME: </string>
+    <string name="lastname">LASTNAME: </string>
+    <string name="email">EMAIL: </string>
+    <string name="gender">GENDER: </string>
+    <string name="login">LOGIN</string>
+    <string name="clear">CLEAR</string>
+    <string name="register">REGISTER</string>
+    <string name="male">MALE</string>
+    <string name="female">FEMALE</string>
+    <string name="settings">Settings</string>
+    <string name="search">Search</string>
+    <string name="textOne">Life Story Lines</string>
+    <string name="textOne.1">SHOW LIFE STORY LINES</string>
+    <string name="textTwo">Family Tree Lines</string>
+    <string name="textTwo.1">SHOW FAMILY TREE LINES</string>
+    <string name="textThree">Spouse Lines</string>
+    <string name="textThree.1">SHOW SPOUSE LINES</string>
+    <string name="textFour">Father\'s Side</string>
+    <string name="textFour.1">FILTER BY FATHER\'S SIDE OF FAMILY</string>
+    <string name="textFive">Mother\'s Side</string>
+    <string name="textFive.1">FILTER BY MOTHER\'S SIDE OF FAMILY</string>
+    <string name="textSix">Male Events</string>
+    <string name="textSix.1">FILTER EVENTS BASED ON GENDER</string>
+    <string name="textSeven">Female Events</string>
+    <string name="textEight">Logout</string>
+    <string name="textEight.1">RETURN TO LOGIN SCREEN</string>
+    <string name="person_firstname">First Name</string>
+    <string name="person_lastname">Last Name</string>
+    <string name="person_gender">Gender</string>
+    <string name="lifeEventsTitle">LIFE EVENTS</string>
+    <string name="familyTitle">FAMILY</string>
 </resources>

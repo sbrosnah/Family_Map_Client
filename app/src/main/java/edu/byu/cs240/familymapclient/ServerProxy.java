@@ -2,6 +2,7 @@ package edu.byu.cs240.familymapclient;
 
 import com.google.gson.Gson;
 
+import request.LoadRequest;
 import request.LoginRequest;
 import request.RegisterRequest;
 import result.AllEventResult;
@@ -166,6 +167,60 @@ public class ServerProxy {
         }
         return null;
     }
+
+    public Result loadDatabase() {
+        try {
+
+            String jsonFilePath = "/Users/spencerbrosnahan/240_projects/Family Map Client/passoffFiles/LoadData.json";
+
+            URL url = new URL("http://" + serverHost + ":" + serverPort + "/load");
+
+            HttpURLConnection http = (HttpURLConnection) url.openConnection();
+
+            http.setRequestMethod("POST");
+
+            http.setDoOutput(true);
+
+            http.addRequestProperty("Accept", "application/json");
+
+            http.connect();
+
+            //TODO: get json object from file
+            File file = new File(jsonFilePath);
+
+            LoadRequest request;
+
+            try(FileReader fileReader = new FileReader(file);
+                BufferedReader bufferedReader = new BufferedReader(fileReader)) {
+                request = gson.fromJson(bufferedReader, LoadRequest.class);
+            }
+
+
+            String json = gson.toJson(request);
+
+            OutputStream reqBody = http.getOutputStream();
+
+            writeString(json, reqBody);
+
+            reqBody.close();
+
+            InputStream respBody;
+
+            if(http.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                respBody = http.getInputStream();
+            } else {
+                respBody = http.getErrorStream();
+            }
+            String respData = readString(respBody);
+            RegisterResult result = gson.fromJson(respData, RegisterResult.class);
+
+            return result;
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+        return null;
+    }
+
 
     public Result clearDatabase() {
         try {
